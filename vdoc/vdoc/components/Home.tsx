@@ -42,7 +42,13 @@ const Home: React.FC = () => {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [extractedText, setExtractedText] = useState('');
   const [imageSrc, setImageSrc] = useState<string | null>(null);
-  const [crop, setCrop] = useState<PixelCrop>({ unit: 'px', width: 30, height: 30, x: 0, y: 0 });
+  const [crop, setCrop] = useState({
+    unit: 'px',  // Use percentage to make it responsive to the image size
+    width: 50,  // Start with 50% of the image width
+    height: 50, // Start with 50% of the image height
+    x: 25,      // Center the crop area horizontally
+    y: 25       // Center the crop area vertically
+  });
   const [croppedImageBlob, setCroppedImageBlob] = useState<Blob | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -72,7 +78,7 @@ const Home: React.FC = () => {
       setResult('An error occurred while fetching the drug interaction information.');
     }
   };
-
+  const [croppedImageUrl, setCroppedImageUrl] = useState('');
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
@@ -87,60 +93,76 @@ const Home: React.FC = () => {
 
   const onCropComplete = useCallback((crop: PixelCrop) => {
     if (imageSrc && crop.width && crop.height) {
-      getCroppedImg(imageSrc, crop);
+      getCroppedImg(imageSrc, crop)
+        .then(blob => setCroppedImageBlob(blob))
+        .catch(error => console.error('Error cropping image:', error));
     }
   }, [imageSrc]);
 
-  const getCroppedImg = (imageSrc: string, crop: PixelCrop) => {
-    const image = new Image();
-    image.src = imageSrc;
-    image.onload = () => {
-      const canvas = document.createElement('canvas');
-      const scaleX = image.naturalWidth / image.width;
-      const scaleY = image.naturalHeight / image.height;
+  const getCroppedImg = (imageSrc, crop) => {
+    return new Promise((resolve, reject) => {
+      const image = new Image();
+      image.src = imageSrc;
+      image.onload = () => {
+        const canvas = document.createElement('canvas');
+        const scaleX = image.naturalWidth / image.width;
+        const scaleY = image.naturalHeight / image.height;
   
-      canvas.width = crop.width * scaleX;
-      canvas.height = crop.height * scaleY;
-      const ctx = canvas.getContext('2d');
+        // Adjusting canvas size to the dimensions of the crop
+        canvas.width = crop.width;
+        canvas.height = crop.height;
+        const ctx = canvas.getContext('2d');
   
-      if (ctx) {
-        ctx.drawImage(
-          image,
-          crop.x * scaleX,
-          crop.y * scaleY,
-          crop.width * scaleX,
-          crop.height * scaleY,
-          0,
-          0,
-          crop.width * scaleX,
-          crop.height * scaleY
-        );
+        if (ctx) {
+          // Drawing the cropped image with adjusted scale
+          ctx.drawImage(
+            image,
+            crop.x * scaleX,  // Starting x-coordinate adjusted for scale
+            crop.y * scaleY,  // Starting y-coordinate adjusted for scale
+            crop.width * scaleX,  // Width adjusted for scale
+            crop.height * scaleY, // Height adjusted for scale
+            0,  // x-coordinate on canvas to place the result
+            0,  // y-coordinate on canvas to place the result
+            crop.width,  // Width of the cropped image on canvas
+            crop.height  // Height of the cropped image on canvas
+          );
   
-        canvas.toBlob((blob) => {
-          if (blob) {
-            setCroppedImageBlob(blob);
-          }
-        }, 'image/jpeg');
-      }
-    };
+          // Creating a blob from the canvas
+          canvas.toBlob((blob) => {
+            if (blob) {
+              resolve(blob);
+              // Create an object URL for the blob to set as image source
+              const url = URL.createObjectURL(blob);
+              setCroppedImageUrl(url);
+            } else {
+              reject(new Error('Canvas to Blob conversion failed'));
+            }
+          }, 'image/jpeg');
+        } else {
+          reject(new Error('Failed to get canvas context'));
+        }
+      };
+      image.onerror = () => reject(new Error('Failed to load image'));
+    });
   };
+  
   
 
   const handleExtract = async () => {
     if (croppedImageBlob) {
       const formData = new FormData();
       formData.append('file', croppedImageBlob, 'cropped-image.jpg');
-
+  
       try {
         const response = await fetch('/api/extract-text', {
           method: 'POST',
           body: formData,
         });
-
+  
         if (!response.ok) {
           throw new Error('Failed to extract text from image');
         }
-
+  
         const data = await response.json();
         setExtractedText(data.text || 'No text extracted');
       } catch (error) {
@@ -173,9 +195,12 @@ const Home: React.FC = () => {
               crop={crop}
               onChange={(newCrop) => setCrop(newCrop)}
               onComplete={onCropComplete}
+              maxHeight={100}
+              maxWidth={100} 
             >
-              <img src={imageSrc} alt="Source" />
+              <img src={imageSrc} alt="Source" className='block max-w-full h-auto' />
             </ReactCrop>
+            
           </div>
         )}
         {croppedImageBlob && (
@@ -200,6 +225,11 @@ const Home: React.FC = () => {
           <p className="text-gray-700">{extractedText}</p>
         </div>
       )}
+      {croppedImageUrl && (
+  <div className="mt-4">
+    <img src={croppedImageUrl} alt="Cropped" />
+  </div>
+)}
       {result && (
         <div className="mt-8 w-full max-w-2xl bg-white p-6 rounded-lg shadow-md">
           <h2 className="text-2xl font-bold text-gray-900 mb-4">Result:</h2>
