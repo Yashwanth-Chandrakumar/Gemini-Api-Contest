@@ -2,7 +2,7 @@
 import { GoogleGenerativeAI, HarmBlockThreshold, HarmCategory } from '@google/generative-ai';
 import { marked } from 'marked';
 import React, { useCallback, useState } from 'react';
-import ReactCrop, { Crop } from 'react-image-crop';
+import ReactCrop, { PixelCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
 
 const genAI = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GOOGLE_API_KEY);
@@ -42,30 +42,31 @@ const Home: React.FC = () => {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [extractedText, setExtractedText] = useState('');
   const [imageSrc, setImageSrc] = useState<string | null>(null);
-  const [crop, setCrop] = useState<Crop>({ unit: '%', width: 30, height: 30, x: 0, y: 0 });
+  const [crop, setCrop] = useState<PixelCrop>({ unit: 'px', width: 30, height: 30, x: 0, y: 0 });
   const [croppedImageBlob, setCroppedImageBlob] = useState<Blob | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       let extractedDrugName = drugName || extractedText;
-
-      const parts = [
-        { text: "Drug name: give the complete drug interaction and primary use of Warfarin" },
-        {
-          text: "Drug interaction: **Drug Name:** Warfarin\n\n**Primary Use:** Anticoagulant (prevents blood clots)\n\n**Drug Interactions:**\n\n* **Antibiotics:**\n    * **Rifampin:** Decreases warfarin effectiveness\n    * **Ciprofloxacin:** Increases warfarin effectiveness\n* **NSAIDs (Pain Relievers):**\n    * **Aspirin, Ibuprofen:** Increase warfarin effectiveness\n* **Other Anticoagulants:**\n    * **Heparin:** Additive anticoagulant effect\n* **Antidepressants:**\n    * **Fluoxetine:** Increases warfarin effectiveness\n* **Anticonvulsants:**\n    * **Carbamazepine:** Decreases warfarin effectiveness\n* **Antivirals:**\n    * **Ritonavir:** Increases warfarin effectiveness\n* **Herbal Supplements:**\n    * **Ginkgo biloba:** Increases bleeding risk\n    * **Garlic:** May increase anticoagulant effect\n* **Foods:**\n    * **Leafy green vegetables (e.g., spinach, kale):** High in vitamin K, which can reduce warfarin effectiveness"
-        },
-        {
-          text: `Drug name: ${extractedDrugName} If the input is a valid drug name, provide the complete drug interaction and primary use information. If the input is not a recognized drug name, respond accordingly. Don't ask the user to talk with a doctor they know it they are just referring so don't add a note to consult a doctor as they are going to do it anyway.`
-        },
-        { text: "Drug interaction: " },
-      ];
-      const response = await model.generateContent({
-        contents: [{ role: "user", parts }],
-        generationConfig
-      });
-      const html = marked(response.response.text());
-      setResult(html);
+      if (extractedDrugName !== "") {
+        const parts = [
+          { text: "Drug name: give the complete drug interaction and primary use of Warfarin" },
+          {
+            text: "Drug interaction: **Drug Name:** Warfarin\n\n**Primary Use:** Anticoagulant (prevents blood clots)\n\n**Drug Interactions:**\n\n* **Antibiotics:**\n    * **Rifampin:** Decreases warfarin effectiveness\n    * **Ciprofloxacin:** Increases warfarin effectiveness\n* **NSAIDs (Pain Relievers):**\n    * **Aspirin, Ibuprofen:** Increase warfarin effectiveness\n* **Other Anticoagulants:**\n    * **Heparin:** Additive anticoagulant effect\n* **Antidepressants:**\n    * **Fluoxetine:** Increases warfarin effectiveness\n* **Anticonvulsants:**\n    * **Carbamazepine:** Decreases warfarin effectiveness\n* **Antivirals:**\n    * **Ritonavir:** Increases warfarin effectiveness\n* **Herbal Supplements:**\n    * **Ginkgo biloba:** Increases bleeding risk\n    * **Garlic:** May increase anticoagulant effect\n* **Foods:**\n    * **Leafy green vegetables (e.g., spinach, kale):** High in vitamin K, which can reduce warfarin effectiveness"
+          },
+          {
+            text: `Drug name: ${extractedDrugName} If the input is a valid drug name, provide the complete drug interaction and primary use information. If the input is not a recognized drug name, respond accordingly. Don't ask the user to talk with a doctor they know it they are just referring so don't add a note to consult a doctor as they are going to do it anyway.`
+          },
+          { text: "Drug interaction: " },
+        ];
+        const response = await model.generateContent({
+          contents: [{ role: "user", parts }],
+          generationConfig
+        });
+        const html = marked(response.response.text());
+        setResult(html);
+      }
     } catch (error) {
       console.error('Error:', error);
       setResult('An error occurred while fetching the drug interaction information.');
@@ -84,34 +85,34 @@ const Home: React.FC = () => {
     }
   };
 
-  const onCropComplete = useCallback((crop: Crop) => {
+  const onCropComplete = useCallback((crop: PixelCrop) => {
     if (imageSrc && crop.width && crop.height) {
       getCroppedImg(imageSrc, crop);
     }
   }, [imageSrc]);
 
-  const getCroppedImg = (imageSrc: string, crop: Crop) => {
+  const getCroppedImg = (imageSrc: string, crop: PixelCrop) => {
     const image = new Image();
     image.src = imageSrc;
     image.onload = () => {
       const canvas = document.createElement('canvas');
       const scaleX = image.naturalWidth / image.width;
       const scaleY = image.naturalHeight / image.height;
-      canvas.width = crop.width!;
-      canvas.height = crop.height!;
+      canvas.width = crop.width;
+      canvas.height = crop.height;
       const ctx = canvas.getContext('2d');
 
       if (ctx) {
         ctx.drawImage(
           image,
-          crop.x! * scaleX,
-          crop.y! * scaleY,
-          crop.width! * scaleX,
-          crop.height! * scaleY,
+          crop.x * scaleX,
+          crop.y * scaleY,
+          crop.width * scaleX,
+          crop.height * scaleY,
           0,
           0,
-          crop.width!,
-          crop.height!
+          crop.width,
+          crop.height
         );
 
         canvas.toBlob((blob) => {
@@ -167,11 +168,12 @@ const Home: React.FC = () => {
         {imageSrc && (
           <div className="mt-4">
             <ReactCrop
-              src={imageSrc}
               crop={crop}
               onChange={(newCrop) => setCrop(newCrop)}
               onComplete={onCropComplete}
-            />
+            >
+              <img src={imageSrc} alt="Source" />
+            </ReactCrop>
           </div>
         )}
         {croppedImageBlob && (
