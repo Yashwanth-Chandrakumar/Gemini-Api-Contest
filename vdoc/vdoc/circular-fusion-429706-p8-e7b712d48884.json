@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "circular-fusion-429706-p8",
+  "private_key_id": "e7b712d488848e0c15432e3ecc1c026ef8cbac5f",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCd1DCvzdr2WqXU\nbUFTibs5whnrnbQjkB6susy8jMLd+PhiR0ZPOjKYzBZKGEwb+oI+RkV7GYBIECJc\nPElcpBMJOMb3pNq7+vNX6HYM2PHL/F4BZsQngbv45fh2MgZ4nXDp8B2+afUij3Jk\nu0L1Wj5nGWhvtoYk+INhYzxADxfGvfNlZcCjda0XNjyDUneGm652ACPT846y4mML\nBbhiielj+Y6V6UtxppuMpl4fyiwaN3DcIfN2DWKAAYowT1FSbjvEx8HVm1F/FxRr\nFZyt82NphOImUW02wCUIJ3ZG0XMVlYlaVyY52OcmS0WdZpxOwfab0p+2qmQSCOgJ\neyhLr/iFAgMBAAECggEAQk0gQso8gJ8l6K4Y8kn6v9G9Z9BxGztw12kFlvOe7Pap\nCUgdziyJksyxVGEOn/ZFfnmwuHzG+f7lIFAnFWbLpGUYmHHFfZB3Z2d9J/p+4Q1c\nRERyhJIob+/Tx3tOYp7pDy1SoWoLk4AlMxHDmCRX8KGo0L0hbyiCsIeqiNKOT2tV\naEtjuBj7nPCnQ/yNYLZFVgsmO+Yrk17yi1QYAGgl/NxOb2ZZrbxnTWSqEXcZSFLN\nNVaL9ew6DF4HzNQbRdLi2w4GWwOwBSHeq1m1iZxpA2r5DHStmXunE5lMlCOuFfc7\nlGkBrJ1AM81qeoej1vPtNvrVr8GqD4tmDb9yQbPQpQKBgQDR8l1/C9Qcx3rvFJyI\n6/FKdsIMEA95I9wvhKmX9sMWFq5C9KeV21i8SpC39uPvb2tJoIQ514JJoxaIOVxS\n1Xv3QTe21JGbWTOvp9CGosBCL6TndBsWJ0bJXJMZpTlvXaEXnGQK81IPrBXuMczo\noUWe7M3P+oYzDJVd4PA7dFaWkwKBgQDAcyCLR306OcQPUjPswFQGUecVSpPZ9Xiv\nwG7cOspKRKvsf6KI9llH+L8q7vLp0AmhdjfdhrMxZ+AsWVkSwnrZPIW8fttlEzoa\n370aswpEEc6t9cTqRkcYCgNBYdl0vxfd70OV0OsqhdNsrWyU4mzECo3Id5t8K7OX\nnLI9WODLhwKBgGdjpat1FcX+boniapv7JV54UWNDXXtYr4wvFp2hhb0Q+kw603S3\nCmHfjpkp2mIFSp59j+A0QxMkX2pCZTbdryi6U0eUMwh/yzZLvCMxbuCpOdpJkTU9\nrlxnXIGankg7oaNQ/uttnBHfuwUMPU6qbPCwyUIMq53kKoKKzYNZ7XJFAoGAWazL\nu1rChYEpVKJPQ8CS5qb/cLJhlqyFYg/fGIvkexroqbkHuZ5hF+JW4eCaHE0uT6hQ\ne88qbJkkokW39b/dkqBbCOxruvtsld0vtuM6o2FQ10qwSSIaOp9fyPWZaIcqzeWR\nrpu9GQFm9TsSX4XqfKcWThU9xGxwsPL5MxDZHr0CgYEAzt8ipfwVXO1J8YxwJS3R\nCV/8lLtOAb6iZ5sGCbbCgwC7v5xnAd8Xyo+73JA70/KY4uK7ZNOwKYsqc31aVlOL\nBs4gAAy7JktPbDAEI7Q65q6uiUSuJ6rMZh4XHYvow0sFW1ZtdcNHxGM57qPG8Dxp\n7Xcht+pGAYhO7JJ3cShWwlA=\n-----END PRIVATE KEY-----\n",
+  "client_email": "druginteraction@circular-fusion-429706-p8.iam.gserviceaccount.com",
+  "client_id": "103233316235351530285",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/druginteraction%40circular-fusion-429706-p8.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}

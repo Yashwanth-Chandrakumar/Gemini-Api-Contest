@@ -1,21 +1,32 @@
 "use client"
 import { GoogleGenerativeAI, HarmBlockThreshold, HarmCategory } from '@google/generative-ai';
 import { marked } from 'marked';
-import React, { useState } from 'react';
-// Use environment variable for API key
-const genAI = new GoogleGenerativeAI("AIzaSyBr4esIdyu9KU9SM1pn541AnaPvidjN0JI");
+import React, { useCallback, useState } from 'react';
+import ReactCrop, { Crop } from 'react-image-crop';
+import 'react-image-crop/dist/ReactCrop.css';
+
+const genAI = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GOOGLE_API_KEY);
 const safetySettings = [
   {
-    category: HarmCategory.HARM_CATEGORY_HARASSMENT,
+    category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
     threshold: HarmBlockThreshold.BLOCK_NONE,
   },
   {
     category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
     threshold: HarmBlockThreshold.BLOCK_NONE,
   },
+  {
+    category: HarmCategory.HARM_CATEGORY_HARASSMENT,
+    threshold: HarmBlockThreshold.BLOCK_NONE,
+  },
+  {
+    category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+    threshold: HarmBlockThreshold.BLOCK_NONE,
+  },
 ];
 const model = genAI.getGenerativeModel({
-  model: "gemini-1.5-flash",safetySettings
+  model: "gemini-1.5-flash",
+  safetySettings
 });
 const generationConfig = {
   temperature: 1,
@@ -28,15 +39,26 @@ const generationConfig = {
 const Home: React.FC = () => {
   const [drugName, setDrugName] = useState('');
   const [result, setResult] = useState('');
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [extractedText, setExtractedText] = useState('');
+  const [imageSrc, setImageSrc] = useState<string | null>(null);
+  const [crop, setCrop] = useState<Crop>({ unit: '%', width: 30, height: 30, x: 0, y: 0 });
+  const [croppedImageBlob, setCroppedImageBlob] = useState<Blob | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      let extractedDrugName = drugName || extractedText;
+
       const parts = [
-        {text: "Drug name: give the complete drug interaction and primary use of Warfarin"},
-        {text: "Drug interaction: **Drug Name:** Warfarin\n\n**Primary Use:** Anticoagulant (prevents blood clots)\n\n**Drug Interactions:**\n\n* **Antibiotics:**\n    * **Rifampin:** Decreases warfarin effectiveness\n    * **Ciprofloxacin:** Increases warfarin effectiveness\n* **NSAIDs (Pain Relievers):**\n    * **Aspirin, Ibuprofen:** Increase warfarin effectiveness\n* **Other Anticoagulants:**\n    * **Heparin:** Additive anticoagulant effect\n* **Antidepressants:**\n    * **Fluoxetine:** Increases warfarin effectiveness\n* **Anticonvulsants:**\n    * **Carbamazepine:** Decreases warfarin effectiveness\n* **Antivirals:**\n    * **Ritonavir:** Increases warfarin effectiveness\n* **Herbal Supplements:**\n    * **Ginkgo biloba:** Increases bleeding risk\n    * **Garlic:** May increase anticoagulant effect\n* **Foods:**\n    * **Leafy green vegetables (e.g., spinach, kale):** High in vitamin K, which can reduce warfarin effectiveness"},
-        {text: `Drug name: ${drugName} If the input is a valid drug name, provide the complete drug interaction and primary use information. If the input is not a recognized drug name, respond accordingly. Dont ask the user to talk with a doctor they know it they are just referring so dont add a note to consult a doctor as they are going to do it anyway.`},
-        {text: "Drug interaction: "},
+        { text: "Drug name: give the complete drug interaction and primary use of Warfarin" },
+        {
+          text: "Drug interaction: **Drug Name:** Warfarin\n\n**Primary Use:** Anticoagulant (prevents blood clots)\n\n**Drug Interactions:**\n\n* **Antibiotics:**\n    * **Rifampin:** Decreases warfarin effectiveness\n    * **Ciprofloxacin:** Increases warfarin effectiveness\n* **NSAIDs (Pain Relievers):**\n    * **Aspirin, Ibuprofen:** Increase warfarin effectiveness\n* **Other Anticoagulants:**\n    * **Heparin:** Additive anticoagulant effect\n* **Antidepressants:**\n    * **Fluoxetine:** Increases warfarin effectiveness\n* **Anticonvulsants:**\n    * **Carbamazepine:** Decreases warfarin effectiveness\n* **Antivirals:**\n    * **Ritonavir:** Increases warfarin effectiveness\n* **Herbal Supplements:**\n    * **Ginkgo biloba:** Increases bleeding risk\n    * **Garlic:** May increase anticoagulant effect\n* **Foods:**\n    * **Leafy green vegetables (e.g., spinach, kale):** High in vitamin K, which can reduce warfarin effectiveness"
+        },
+        {
+          text: `Drug name: ${extractedDrugName} If the input is a valid drug name, provide the complete drug interaction and primary use information. If the input is not a recognized drug name, respond accordingly. Don't ask the user to talk with a doctor they know it they are just referring so don't add a note to consult a doctor as they are going to do it anyway.`
+        },
+        { text: "Drug interaction: " },
       ];
       const response = await model.generateContent({
         contents: [{ role: "user", parts }],
@@ -50,6 +72,81 @@ const Home: React.FC = () => {
     }
   };
 
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setImageFile(file);
+      setExtractedText('');
+
+      const reader = new FileReader();
+      reader.onload = (e) => setImageSrc(e.target?.result as string);
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const onCropComplete = useCallback((crop: Crop) => {
+    if (imageSrc && crop.width && crop.height) {
+      getCroppedImg(imageSrc, crop);
+    }
+  }, [imageSrc]);
+
+  const getCroppedImg = (imageSrc: string, crop: Crop) => {
+    const image = new Image();
+    image.src = imageSrc;
+    image.onload = () => {
+      const canvas = document.createElement('canvas');
+      const scaleX = image.naturalWidth / image.width;
+      const scaleY = image.naturalHeight / image.height;
+      canvas.width = crop.width!;
+      canvas.height = crop.height!;
+      const ctx = canvas.getContext('2d');
+
+      if (ctx) {
+        ctx.drawImage(
+          image,
+          crop.x! * scaleX,
+          crop.y! * scaleY,
+          crop.width! * scaleX,
+          crop.height! * scaleY,
+          0,
+          0,
+          crop.width!,
+          crop.height!
+        );
+
+        canvas.toBlob((blob) => {
+          if (blob) {
+            setCroppedImageBlob(blob);
+          }
+        }, 'image/jpeg');
+      }
+    };
+  };
+
+  const handleExtract = async () => {
+    if (croppedImageBlob) {
+      const formData = new FormData();
+      formData.append('file', croppedImageBlob, 'cropped-image.jpg');
+
+      try {
+        const response = await fetch('/api/extract-text', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to extract text from image');
+        }
+
+        const data = await response.json();
+        setExtractedText(data.text || 'No text extracted');
+      } catch (error) {
+        console.error('Error:', error);
+        setExtractedText('Failed to extract text from image');
+      }
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center py-12 sm:px-6 lg:px-8">
       <h1 className="text-3xl font-extrabold text-gray-900 mb-8">Drug Interaction Checker</h1>
@@ -59,9 +156,33 @@ const Home: React.FC = () => {
           value={drugName}
           onChange={(e) => setDrugName(e.target.value)}
           placeholder="Enter drug name"
-          required
           className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
         />
+        <input
+          type="file"
+          onChange={handleImageUpload}
+          accept="image/*"
+          className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+        />
+        {imageSrc && (
+          <div className="mt-4">
+            <ReactCrop
+              src={imageSrc}
+              crop={crop}
+              onChange={(newCrop) => setCrop(newCrop)}
+              onComplete={onCropComplete}
+            />
+          </div>
+        )}
+        {croppedImageBlob && (
+          <button
+            type="button"
+            onClick={handleExtract}
+            className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+          >
+            Extract Text
+          </button>
+        )}
         <button
           type="submit"
           className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
@@ -69,6 +190,12 @@ const Home: React.FC = () => {
           Check Interactions
         </button>
       </form>
+      {extractedText && (
+        <div className="mt-4 w-full max-w-md bg-white p-4 rounded-lg shadow-md">
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">Extracted Text:</h3>
+          <p className="text-gray-700">{extractedText}</p>
+        </div>
+      )}
       {result && (
         <div className="mt-8 w-full max-w-2xl bg-white p-6 rounded-lg shadow-md">
           <h2 className="text-2xl font-bold text-gray-900 mb-4">Result:</h2>
