@@ -56,7 +56,36 @@ const Home: React.FC = () => {
             text: "Drug interaction: **Drug Name:** Warfarin\n\n**Primary Use:** Anticoagulant (prevents blood clots)\n\n**Drug Interactions:**\n\n* **Antibiotics:**\n    * **Rifampin:** Decreases warfarin effectiveness\n    * **Ciprofloxacin:** Increases warfarin effectiveness\n* **NSAIDs (Pain Relievers):**\n    * **Aspirin, Ibuprofen:** Increase warfarin effectiveness\n* **Other Anticoagulants:**\n    * **Heparin:** Additive anticoagulant effect\n* **Antidepressants:**\n    * **Fluoxetine:** Increases warfarin effectiveness\n* **Anticonvulsants:**\n    * **Carbamazepine:** Decreases warfarin effectiveness\n* **Antivirals:**\n    * **Ritonavir:** Increases warfarin effectiveness\n* **Herbal Supplements:**\n    * **Ginkgo biloba:** Increases bleeding risk\n    * **Garlic:** May increase anticoagulant effect\n* **Foods:**\n    * **Leafy green vegetables (e.g., spinach, kale):** High in vitamin K, which can reduce warfarin effectiveness"
           },
           {
-            text: `Drug name: ${extractedDrugName} If the input is a valid drug name, provide the accurate complete drug interaction and primary use information like a professional pharmacist. If the input is not a recognized drug name, it might be a typos give information of the closest drug related to the name else respond accordingly. Don't ask the user to talk with a doctor they know it they are just referring so don't add a note to consult a doctor as they are going to do it anyway.`
+            text: `Drug name: ${extractedDrugName}
+
+1. If ${extractedDrugName} is a valid drug name:
+   - Provide comprehensive information on drug interactions, including:
+     a) Major interactions with other medications
+     b) Interactions with food, alcohol, and supplements
+     c) Contraindications for specific medical conditions
+   - Detail the primary uses of the drug, including:
+     a) FDA-approved indications
+     b) Common off-label uses
+   - Specify the drug class and mechanism of action
+   - List common side effects and their frequency
+   - Mention typical dosage forms and administration routes
+
+2. If ${extractedDrugName} is not recognized:
+   a) Convert ${extractedDrugName} to lowercase and check again
+   b) If still unrecognized, use advanced string matching algorithms to identify the closest matching drug name
+   c) If a close match is found, provide the information as in step 1, but preface with:
+      "The drug name '${extractedDrugName}' is not recognized. Did you mean [closest match]? Here's information for [closest match]:"
+   d) If no close match is found, respond with:
+      "The drug name '${extractedDrugName}' is not recognized and no close matches were found. Please verify the spelling and try again."
+
+3. For all responses:
+   - Use professional pharmacological terminology
+   - Provide information in a clear, structured format
+   - Include relevant pharmacokinetic data (half-life, metabolism, excretion) when applicable
+   - Mention any black box warnings or special precautions
+   - For combination drugs, provide information on all active ingredients
+
+Note: This information is for reference only. While consultation with a healthcare professional is always recommended, this disclaimer is omitted from the response as per the user's request.`
           },
           { text: "Drug interaction: " },
         ];
@@ -177,66 +206,91 @@ const Home: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center py-12 sm:px-6 lg:px-8">
-      <h1 className="text-3xl font-extrabold text-gray-900 mb-8">Drug Interaction Checker</h1>
-      <form onSubmit={handleSubmit} className="space-y-6 w-full max-w-md">
-        <input
-          type="text"
-          value={drugName}
-          onChange={(e) => setDrugName(e.target.value)}
-          placeholder="Enter drug name"
-          className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-        />
-        <input
-          type="file"
-          onChange={handleImageUpload}
-          accept="image/*"
-          className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-        />
-        {imageSrc && (
-  <div className="mt-4">
-    <ReactCrop
-      crop={crop}
-      onChange={(newCrop) => setCrop(newCrop)}
-      onComplete={onCropComplete}
-    >
-      <img src={imageSrc.src} alt="Source" style={{maxWidth: '100%', height: 'auto'}} />
-    </ReactCrop>
-  </div>
-)}
-        {croppedImageBlob && (
-          <button
-            type="button"
-            onClick={handleExtract}
-            className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-          >
-            Extract Text
-          </button>
+    <div className="min-h-screen bg-gray-100 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto">
+        <h1 className="text-3xl font-extrabold text-gray-900 text-center mb-8">Drug Interaction Checker</h1>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="bg-white shadow rounded-lg p-6">
+            <h2 className="text-xl font-semibold mb-4">Enter Drug Name or Upload Image</h2>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <input
+                type="text"
+                value={extractedText}
+                onChange={(e) => setDrugName(e.target.value)}
+                placeholder="Enter drug name"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md"
+              />
+              <div className="flex items-center space-x-4">
+                <input
+                  type="file"
+                  onChange={handleImageUpload}
+                  accept="image/*"
+                  className="hidden"
+                  id="image-upload"
+                />
+                <label
+                  htmlFor="image-upload"
+                  className="cursor-pointer bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
+                >
+                  Upload Image
+                </label>
+                {imageSrc && (
+                  <span className="text-sm text-gray-600">Image uploaded</span>
+                )}
+              </div>
+              {imageSrc && (
+                <div className="mt-4">
+                  <ReactCrop
+                    crop={crop}
+                    onChange={(newCrop) => setCrop(newCrop)}
+                    onComplete={onCropComplete}
+                  >
+                    <img src={imageSrc.src} alt="Source" style={{maxWidth: '100%', height: 'auto'}} />
+                  </ReactCrop>
+                </div>
+              )}
+              {croppedImageBlob && (
+                <button
+                  type="button"
+                  onClick={handleExtract}
+                  className="w-full bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600"
+                >
+                  Extract Text
+                </button>
+              )}
+              <button
+                type="submit"
+                className="w-full bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700"
+              >
+                Check Interactions
+              </button>
+            </form>
+          </div>
+          
+          <div className="space-y-6">
+            {extractedText && (
+              <div className="bg-white shadow rounded-lg p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Extracted Text:</h3>
+                <p className="text-gray-700">{extractedText}</p>
+              </div>
+            )}
+            {croppedImageUrl && (
+              <div className="bg-white shadow rounded-lg p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Cropped Image:</h3>
+                <img src={croppedImageUrl} alt="Cropped" className="max-w-full h-auto" />
+              </div>
+            )}
+          </div>
+        </div>
+        
+        {result && (
+          <div className="mt-8 bg-white shadow rounded-lg p-6">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">Result:</h2>
+            <div dangerouslySetInnerHTML={{ __html: result }} className="prose max-w-none" />
+          </div>
         )}
-        <button
-          type="submit"
-          className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-        >
-          Check Interactions
-        </button>
-      </form>
-      {extractedText && (
-        <div className="mt-4 w-full max-w-md bg-white p-4 rounded-lg shadow-md">
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Extracted Text:</h3>
-          <p className="text-gray-700">{extractedText}</p>
-        </div>
-      )}
-      {croppedImageUrl && (
-        <div className="mt-4">
-          <img src={croppedImageUrl} alt="Cropped" />
-        </div>
-      )}
-      {result && (
-        <div className="mt-8 w-full max-w-2xl bg-white p-6 rounded-lg shadow-md">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Result:</h2>
-          <div dangerouslySetInnerHTML={{ __html: result }} className="prose"></div>
-        </div>
-      )}
+      </div>
     </div>
   );
 };
