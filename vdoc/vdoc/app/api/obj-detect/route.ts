@@ -1,46 +1,37 @@
-import vision from '@google-cloud/vision';
-import { readFile, unlink, writeFile } from 'fs/promises';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import { NextRequest, NextResponse } from 'next/server';
-import os from 'os';
-import { join } from 'path';
 
-// Read the JSON file
-const readCredentials = async () => {
-  const credentialsPath = join(process.cwd(), 'circular-fusion-429706-p8-e7b712d48884.json');
-  const fileContents = await readFile(credentialsPath, 'utf8');
-  return JSON.parse(fileContents);
-};
+const API_KEY = process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
+if (!API_KEY) {
+  throw new Error('GOOGLE_API_KEY is not set in the environment variables');
+}
+const genAI = new GoogleGenerativeAI(API_KEY);
+const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
 export async function POST(request: NextRequest) {
-  const credentials = await readCredentials();
-  const client = new vision.ImageAnnotatorClient({ credentials });
-
-  const data = await request.formData();
-  const file: File | null = data.get('file') as unknown as File;
-
-  if (!file) {
-    return NextResponse.json({ success: false }, { status: 400 });
-  }
-
-  const bytes = await file.arrayBuffer();
-  const buffer = Buffer.from(bytes);
-
-  // Save the file temporarily
-  const tempDir = os.tmpdir();
-  const filePath = join(tempDir, file.name);
-  await writeFile(filePath, buffer);
-
   try {
-    const [result] = await client.objectLocalization(filePath);
-    const objects = result.localizedObjectAnnotations;
-    const extractedObjects = objects.map(object => object.name).join(', ');
+    const { image } = await request.json();
+    const base64Image = image.split(',')[1]; // Remove the data URL prefix
 
-    // Clean up the temporary file
-    await unlink(filePath);
+    const result = await model.generateContent([
+      {
+        inlineData: {
+          data: base64Image,
+          mimeType: 'image/jpeg'
+        }
+      },
+      "Give names of all ingredients present in the image separated by commas. Give only the ingredients names dont give any intro texts like [The ingredients in the image are..] etc.. I need just the ingredients names alone separated by commas."
+    ]);
 
-    return NextResponse.json({ success: true, text: extractedObjects });
+    const response = await result.response;
+    const text = response.text();
+
+    return NextResponse.json({ ingredients: text });
   } catch (error) {
-    console.error('Error:', error);
-    return NextResponse.json({ success: false, error: 'Failed to detect objects' }, { status: 500 });
+    console.error('Detailed error:', error);
+    if (error instanceof Error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+    return NextResponse.json({ error: 'An unexpected error occurred' }, { status: 500 });
   }
 }
