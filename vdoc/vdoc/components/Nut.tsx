@@ -36,8 +36,8 @@ const generationConfig = {
   responseMimeType: "text/plain",
 };
 
-const Home: React.FC = () => {
-  const [drugName, setDrugName] = useState('');
+const Nut: React.FC = () => {
+  const [foodItem, setFoodItem] = useState('');
   const [result, setResult] = useState('');
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [extractedText, setExtractedText] = useState('');
@@ -49,48 +49,40 @@ const Home: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const combinedDrugNames = [drugName, extractedText].filter(name => name).join(', ');
-      if (combinedDrugNames !== "") {
-        const prompt = `Drug names: ${combinedDrugNames}
+      const combinedFoodItems = [foodItem, extractedText].filter(item => item).join(', ');
+      if (combinedFoodItems !== "") {
+        const prompt = `Food items: ${combinedFoodItems}
 
-1. For each valid drug name in ${combinedDrugNames}:
-   - Provide comprehensive information on drug interactions, including:
-     a) Major interactions with other medications
-     b) Interactions with food, alcohol, and supplements
-     c) Contraindications for specific medical conditions
-   - Detail the primary uses of the drug, including:
-     a) FDA-approved indications
-     b) Common off-label uses
-   - Specify the drug class and mechanism of action
-   - List common side effects and their frequency
-   - Mention typical dosage forms and administration routes
-   - Include relevant pharmacokinetic data (half-life, metabolism, excretion)
-   - Mention any black box warnings or special precautions
-   - For combination drugs, provide information on all active ingredients
+1. For each valid food item in ${combinedFoodItems}:
+   - Provide comprehensive nutritional information, including:
+     a) Calories per serving
+     b) Macronutrients (proteins, fats, carbohydrates)
+     c) Micronutrients (vitamins and minerals)
+     d) Fiber content
+   - Detail the health effects of the food, including:
+     a) Benefits to health
+     b) Potential harmful effects
+     c) Any chemicals or additives present and their effects, including sweeteners, colors, and artificial flavors
+     d) Hazards associated with sweeteners, colors, and artificial flavors used
+     e) Countries that have banned these sweeteners, colors, and artificial flavors and the reasons for the bans
+   - Mention any dietary considerations or restrictions (e.g., gluten-free, vegan)
 
-2. Format the response in a table with two columns for each drug, where the left column contains the section titles and the right column contains the descriptions.
-3. Center the drug name at the top of each table and make it bold.
+2. Format the response in a table with two columns for each food item, where the left column contains the section titles and the right column contains the descriptions.
+3. Center the food item name at the top of each table and make it bold.
 
-4. If a drug name in ${combinedDrugNames} is not recognized:
-   a) Convert the drug name completely to lowercase and check again
-   b) If still unrecognized, use advanced string matching algorithms to identify the closest matching drug name
+4. If a food item in ${combinedFoodItems} is not recognized:
+   a) Convert the food item name completely to lowercase and check again
+   b) If still unrecognized, use advanced string matching algorithms to identify the closest matching food item
    c) If a close match is found, provide the information as in step 1, but preface with:
-      "The drug name '[unrecognized drug name]' is not recognized. Did you mean [closest match]? Here's information for [closest match]:"
+      "The food item '[unrecognized food item]' is not recognized. Did you mean [closest match]? Here's information for [closest match]:"
    d) If no close match is found, respond with:
-      "The drug name '[unrecognized drug name]' is not recognized and no close matches were found. Please verify the spelling and try again."
+      "The food item '[unrecognized food item]' is not recognized and no close matches were found. Please verify the spelling and try again."
 
 5. Do not include any disclaimers or suggestions to consult a healthcare professional in the response.
-6. Focus on the drug interactions as the most prioritized information.`;
+6. Focus on the nutritional information and health effects as the most prioritized information.`;
 
-        
-        const parts = [
-          { text: "Drug name: give the complete drug interaction and primary use of Warfarin" },
-          {
-            text: "Drug interaction: **Drug Name:** Warfarin\n\n**Primary Use:** Anticoagulant (prevents blood clots)\n\n**Drug Interactions:**\n\n* **Antibiotics:**\n    * **Rifampin:** Decreases warfarin effectiveness\n    * **Ciprofloxacin:** Increases warfarin effectiveness\n* **NSAIDs (Pain Relievers):**\n    * **Aspirin, Ibuprofen:** Increase warfarin effectiveness\n* **Other Anticoagulants:**\n    * **Heparin:** Additive anticoagulant effect\n* **Antidepressants:**\n    * **Fluoxetine:** Increases warfarin effectiveness\n* **Anticonvulsants:**\n    * **Carbamazepine:** Decreases warfarin effectiveness\n* **Antivirals:**\n    * **Ritonavir:** Increases warfarin effectiveness\n* **Herbal Supplements:**\n    * **Ginkgo biloba:** Increases bleeding risk\n    * **Garlic:** May increase anticoagulant effect\n* **Foods:**\n    * **Leafy green vegetables (e.g., spinach, kale):** High in vitamin K, which can reduce warfarin effectiveness"
-          },
-          { text: prompt },
-          { text: "Drug interaction: " },
-        ];
+
+        const parts = [{ text: prompt }];
         const response = await model.generateContent({
           contents: [{ role: "user", parts }],
           generationConfig
@@ -100,7 +92,7 @@ const Home: React.FC = () => {
       }
     } catch (error) {
       console.error('Error:', error);
-      setResult('An error occurred while fetching the drug interaction information.');
+      setResult('An error occurred while fetching the food information.');
     }
   };
 
@@ -210,17 +202,17 @@ const Home: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-100 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-extrabold text-gray-900 text-center mb-8">Drug Interaction Checker</h1>
+        <h1 className="text-3xl font-extrabold text-gray-900 text-center mb-8">Food Information Checker</h1>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div className="bg-white shadow rounded-lg p-6">
-            <h2 className="text-xl font-semibold mb-4">Enter Drug Name or Upload Image</h2>
+            <h2 className="text-xl font-semibold mb-4">Enter Food Item or Upload Image</h2>
             <form onSubmit={handleSubmit} className="space-y-4">
               <input
                 type="text"
-                value={drugName}
-                onChange={(e) => setDrugName(e.target.value)}
-                placeholder="Enter drug name"
+                value={foodItem}
+                onChange={(e) => setFoodItem(e.target.value)}
+                placeholder="Enter food item"
                 className="w-full px-3 py-2 border border-gray-300 rounded-md"
               />
               <div className="flex items-center space-x-4">
@@ -265,7 +257,7 @@ const Home: React.FC = () => {
                 type="submit"
                 className="w-full bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700"
               >
-                Check Interactions
+                Check Information
               </button>
             </form>
           </div>
@@ -297,4 +289,4 @@ const Home: React.FC = () => {
   );
 };
 
-export default Home;
+export default Nut;
