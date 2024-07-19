@@ -45,20 +45,15 @@ const Home: React.FC = () => {
   const [croppedImageBlob, setCroppedImageBlob] = useState<Blob | null>(null);
   const [croppedImageUrl, setCroppedImageUrl] = useState('');
   const [imageSrc, setImageSrc] = useState<{ src: string; width: number; height: number } | null>(null);
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      let extractedDrugName = drugName || extractedText;
-      if (extractedDrugName !== "") {
-        const parts = [
-          { text: "Drug name: give the complete drug interaction and primary use of Warfarin" },
-          {
-            text: "Drug interaction: **Drug Name:** Warfarin\n\n**Primary Use:** Anticoagulant (prevents blood clots)\n\n**Drug Interactions:**\n\n* **Antibiotics:**\n    * **Rifampin:** Decreases warfarin effectiveness\n    * **Ciprofloxacin:** Increases warfarin effectiveness\n* **NSAIDs (Pain Relievers):**\n    * **Aspirin, Ibuprofen:** Increase warfarin effectiveness\n* **Other Anticoagulants:**\n    * **Heparin:** Additive anticoagulant effect\n* **Antidepressants:**\n    * **Fluoxetine:** Increases warfarin effectiveness\n* **Anticonvulsants:**\n    * **Carbamazepine:** Decreases warfarin effectiveness\n* **Antivirals:**\n    * **Ritonavir:** Increases warfarin effectiveness\n* **Herbal Supplements:**\n    * **Ginkgo biloba:** Increases bleeding risk\n    * **Garlic:** May increase anticoagulant effect\n* **Foods:**\n    * **Leafy green vegetables (e.g., spinach, kale):** High in vitamin K, which can reduce warfarin effectiveness"
-          },
-          {
-            text: `Drug name: ${extractedDrugName}
+      const combinedDrugNames = [drugName, extractedText].filter(name => name).join(', ');
+      if (combinedDrugNames !== "") {
+        const prompt = `Drug names: ${combinedDrugNames}
 
-1. If ${extractedDrugName} is a valid drug name:
+1. For each valid drug name in ${combinedDrugNames}:
    - Provide comprehensive information on drug interactions, including:
      a) Major interactions with other medications
      b) Interactions with food, alcohol, and supplements
@@ -69,24 +64,31 @@ const Home: React.FC = () => {
    - Specify the drug class and mechanism of action
    - List common side effects and their frequency
    - Mention typical dosage forms and administration routes
-
-2. If ${extractedDrugName} is not recognized:
-   a) Convert ${extractedDrugName} to lowercase and check again
-   b) If still unrecognized, use advanced string matching algorithms to identify the closest matching drug name
-   c) If a close match is found, provide the information as in step 1, but preface with:
-      "The drug name '${extractedDrugName}' is not recognized. Did you mean [closest match]? Here's information for [closest match]:"
-   d) If no close match is found, respond with:
-      "The drug name '${extractedDrugName}' is not recognized and no close matches were found. Please verify the spelling and try again."
-
-3. For all responses:
-   - Use professional pharmacological terminology
-   - Provide information in a clear, structured format
-   - Include relevant pharmacokinetic data (half-life, metabolism, excretion) when applicable
+   - Include relevant pharmacokinetic data (half-life, metabolism, excretion)
    - Mention any black box warnings or special precautions
    - For combination drugs, provide information on all active ingredients
 
-Note: This information is for reference only. While consultation with a healthcare professional is always recommended, this disclaimer is omitted from the response as per the user's request.`
+   2. Center the drug name at the top of each table and make it bold.
+3. Format the response in a table with two columns for each drug, where the left column contains the section titles and the right column contains the descriptions.
+
+4. If a drug name in ${combinedDrugNames} is not recognized:
+   a) Convert the drug name completely to lowercase and check again
+   b) If still unrecognized, use advanced string matching algorithms to identify the closest matching drug name
+   c) If a close match is found, provide the information as in step 1, but preface with:
+      "The drug name '[unrecognized drug name]' is not recognized. Did you mean [closest match]? Here's information for [closest match]:"
+   d) If no close match is found, respond with:
+      "The drug name '[unrecognized drug name]' is not recognized and no close matches were found. Please verify the spelling and try again."
+
+5. Do not include any disclaimers or suggestions to consult a healthcare professional in the response.
+6. Focus on the drug interactions as the most prioritized information.`;
+
+        
+        const parts = [
+          { text: "Drug name: give the complete drug interaction and primary use of Warfarin" },
+          {
+            text: "Drug interaction: **Drug Name:** Warfarin\n\n**Primary Use:** Anticoagulant (prevents blood clots)\n\n**Drug Interactions:**\n\n* **Antibiotics:**\n    * **Rifampin:** Decreases warfarin effectiveness\n    * **Ciprofloxacin:** Increases warfarin effectiveness\n* **NSAIDs (Pain Relievers):**\n    * **Aspirin, Ibuprofen:** Increase warfarin effectiveness\n* **Other Anticoagulants:**\n    * **Heparin:** Additive anticoagulant effect\n* **Antidepressants:**\n    * **Fluoxetine:** Increases warfarin effectiveness\n* **Anticonvulsants:**\n    * **Carbamazepine:** Decreases warfarin effectiveness\n* **Antivirals:**\n    * **Ritonavir:** Increases warfarin effectiveness\n* **Herbal Supplements:**\n    * **Ginkgo biloba:** Increases bleeding risk\n    * **Garlic:** May increase anticoagulant effect\n* **Foods:**\n    * **Leafy green vegetables (e.g., spinach, kale):** High in vitamin K, which can reduce warfarin effectiveness"
           },
+          { text: prompt },
           { text: "Drug interaction: " },
         ];
         const response = await model.generateContent({
@@ -216,7 +218,7 @@ Note: This information is for reference only. While consultation with a healthca
             <form onSubmit={handleSubmit} className="space-y-4">
               <input
                 type="text"
-                value={extractedText}
+                value={drugName}
                 onChange={(e) => setDrugName(e.target.value)}
                 placeholder="Enter drug name"
                 className="w-full px-3 py-2 border border-gray-300 rounded-md"
