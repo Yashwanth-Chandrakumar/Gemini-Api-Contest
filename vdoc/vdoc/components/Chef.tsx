@@ -169,7 +169,7 @@ const Chef: React.FC = () => {
       formData.append('file', croppedImageBlob, 'cropped-image.jpg');
   
       try {
-        const response = await fetch('/api/extract-text', {
+        const response = await fetch('/api/obj-detect', {
           method: 'POST',
           body: formData,
         });
