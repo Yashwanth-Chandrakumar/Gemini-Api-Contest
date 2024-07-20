@@ -33,9 +33,8 @@ export async function POST(request: NextRequest) {
   try {
     const [result] = await client.textDetection(filePath);
     const detections = result.textAnnotations;
-    const extractedText = detections[0] ? detections[0].description : '';
+    const extractedText = detections && detections[0] ? detections[0].description : '';
 
-    // Clean up the temporary file
     await unlink(filePath);
 
     return NextResponse.json({ success: true, text: extractedText });
