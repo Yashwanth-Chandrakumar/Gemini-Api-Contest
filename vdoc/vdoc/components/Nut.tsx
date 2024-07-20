@@ -52,49 +52,51 @@ const Nut: React.FC = () => {
       const combinedFoodItems = [foodItem, extractedText].filter(item => item).join(', ');
       if (combinedFoodItems !== "") {
         const prompt = `Food items: ${combinedFoodItems}
-
-1. For each valid food item in ${combinedFoodItems}:
-   - Provide comprehensive nutritional information, including:
-     a) Calories per serving
-     b) Macronutrients (proteins, fats, carbohydrates)
-     c) Micronutrients (vitamins and minerals)
-     d) Fiber content
-   - Detail the health effects of the food, including:
-     a) Benefits to health
-     b) Potential harmful effects
-     c) Any chemicals or additives present and their effects, including sweeteners, colors, and artificial flavors
-     d) Hazards associated with sweeteners, colors, and artificial flavors used
-     e) Countries that have banned these sweeteners, colors, and artificial flavors and the reasons for the bans
-   - Mention any dietary considerations or restrictions (e.g., gluten-free, vegan)
-
-2. Format the response in a table with two columns for each food item, where the left column contains the section titles and the right column contains the descriptions.
-3. Center the food item name at the top of each table and make it bold.
-
-4. If a food item in ${combinedFoodItems} is not recognized:
-   a) Convert the food item name completely to lowercase and check again
-   b) If still unrecognized, use advanced string matching algorithms to identify the closest matching food item
-   c) If a close match is found, provide the information as in step 1, but preface with:
-      "The food item '[unrecognized food item]' is not recognized. Did you mean [closest match]? Here's information for [closest match]:"
-   d) If no close match is found, respond with:
-      "The food item '[unrecognized food item]' is not recognized and no close matches were found. Please verify the spelling and try again."
-
-5. Do not include any disclaimers or suggestions to consult a healthcare professional in the response.
-6. Focus on the nutritional information and health effects as the most prioritized information.`;
-
-
+  
+  1. For each valid food item in ${combinedFoodItems}:
+     - Provide comprehensive nutritional information, including:
+       a) Calories per serving
+       b) Macronutrients (proteins, fats, carbohydrates)
+       c) Micronutrients (vitamins and minerals)
+       d) Fiber content
+     - Detail the health effects of the food, including:
+       a) Benefits to health
+       b) Potential harmful effects
+       c) Any chemicals or additives present and their effects, including sweeteners, colors, and artificial flavors
+       d) Hazards associated with sweeteners, colors, and artificial flavors used
+       e) Countries that have banned these sweeteners, colors, and artificial flavors and the reasons for the bans
+     - Mention any dietary considerations or restrictions (e.g., gluten-free, vegan)
+  
+  2. Format the response in a table with two columns for each food item, where the left column contains the section titles and the right column contains the descriptions.
+  3. Center the food item name at the top of each table and make it bold.
+  
+  4. If a food item in ${combinedFoodItems} is not recognized:
+     a) Convert the food item name completely to lowercase and check again
+     b) If still unrecognized, use advanced string matching algorithms to identify the closest matching food item
+     c) If a close match is found, provide the information as in step 1, but preface with:
+        "The food item '[unrecognized food item]' is not recognized. Did you mean [closest match]? Here's information for [closest match]:"
+     d) If no close match is found, respond with:
+        "The food item '[unrecognized food item]' is not recognized and no close matches were found. Please verify the spelling and try again."
+  
+  5. Do not include any disclaimers or suggestions to consult a healthcare professional in the response.
+  6. Focus on the nutritional information and health effects as the most prioritized information.`;
+  
         const parts = [{ text: prompt }];
         const response = await model.generateContent({
           contents: [{ role: "user", parts }],
           generationConfig
         });
-        const html = marked(response.response.text());
-        setResult(html);
+  
+        const responseText = await response.response.text();
+        const html = marked(responseText);
+        setResult(html as string);
       }
     } catch (error) {
       console.error('Error:', error);
       setResult('An error occurred while fetching the food information.');
     }
   };
+  
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {

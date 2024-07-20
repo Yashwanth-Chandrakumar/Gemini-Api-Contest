@@ -74,7 +74,7 @@ const response = await model.generateContent({
   generationConfig
 });
 const html = marked(response.response.text());
-setResult(html);
+setResult(html as string);
 }
 } catch (error) {
 console.error('Error:', error);
